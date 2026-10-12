@@ -1,0 +1,220 @@
+name: deploy
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-deploy-main
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      sha: ${{ steps.publish.outputs.sha }}
+      tag: ${{ steps.publish.outputs.tag }}
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Determine version increment
+        id: bump
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          if [[ "$PR_TITLE" =~ ^breaking:[[:space:]]+[^[:space:]] ]]; then
+            BUMP=major
+          elif [[ "$PR_TITLE" =~ ^feat:[[:space:]]+[^[:space:]] ]]; then
+            BUMP=minor
+          elif [[ "$PR_TITLE" =~ ^fix:[[:space:]]+[^[:space:]] ]]; then
+            BUMP=patch
+          else
+            echo "::error::Title must begin with fix:, feat: or breaking:"
+            exit 1
+          fi
+
+          echo "type=$BUMP" >> "$GITHUB_OUTPUT"
+
+      - name: Compute next version from tags
+        id: version
+        env:
+          BUMP: ${{ steps.bump.outputs.type }}
+        run: |
+          LATEST_TAG=$(git tag --list 'v*' --sort=-v:refname | head -n 1)
+          CURRENT=${LATEST_TAG#v}
+          CURRENT=${CURRENT:-0.0.0}
+
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+
+          case "$BUMP" in
+            major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+            minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
+            patch) PATCH=$((PATCH + 1)) ;;
+          esac
+
+          echo "version=$MAJOR.$MINOR.$PATCH" >> "$GITHUB_OUTPUT"
+
+      - name: Publish tag
+        id: publish
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          TAG="v$VERSION"
+
+          if git rev-parse --verify "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "::error::Tag $TAG already exists."
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git tag "$TAG"
+          git push origin "refs/tags/$TAG"
+
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      s3_key: ${{ steps.upload.outputs.s3_key }}
+
+    steps:
+      - name: Checkout release commit
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.release.outputs.sha }}
+          persist-credentials: false
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Build Spring Boot jar
+        id: build
+        run: |
+          set -e
+          chmod +x gradlew
+          ./gradlew clean bootJar
+
+          JAR_FILE=$(ls build/libs/*.jar | head -n 1)
+          echo "jar_path=$JAR_FILE" >> "$GITHUB_OUTPUT"
+
+          echo "Built $JAR_FILE"
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Upload jar to S3 (artifact)
+        id: upload
+        env:
+          RELEASE_TAG: ${{ needs.release.outputs.tag }}
+          RELEASE_SHA: ${{ needs.release.outputs.sha }}
+          JAR_FILE: ${{ steps.build.outputs.jar_path }}
+          ARTIFACT_S3_BUCKET: ${{ secrets.ARTIFACT_S3_BUCKET }}
+        run: |
+          set -e
+          APP_VERSION=${RELEASE_TAG#v}
+          S3_KEY="backend/${APP_VERSION}-${RELEASE_SHA}/trophyquest-backend-${APP_VERSION}.jar"
+          echo "s3_key=$S3_KEY" >> "$GITHUB_OUTPUT"
+          echo "Uploading to s3://${ARTIFACT_S3_BUCKET}/${S3_KEY}"
+          aws s3 cp "$JAR_FILE" "s3://${ARTIFACT_S3_BUCKET}/${S3_KEY}"
+
+  deploy:
+    needs:
+      - release
+      - build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy on EC2 via SSM
+        env:
+          RELEASE_TAG: ${{ needs.release.outputs.tag }}
+          RELEASE_SHA: ${{ needs.release.outputs.sha }}
+          S3_KEY: ${{ needs.build.outputs.s3_key }}
+          ARTIFACT_S3_BUCKET: ${{ secrets.ARTIFACT_S3_BUCKET }}
+          BACKEND_EC2_INSTANCE_ID: ${{ secrets.BACKEND_EC2_INSTANCE_ID }}
+        run: |
+          set -e
+          echo "Using S3_KEY=$S3_KEY"
+
+          COMMAND_ID=$(aws ssm send-command \
+            --document-name "AWS-RunShellScript" \
+            --targets "Key=instanceids,Values=${BACKEND_EC2_INSTANCE_ID}" \
+            --comment "Deploy TrophyQuest backend $RELEASE_TAG ($RELEASE_SHA)" \
+            --parameters "commands=[
+              \"set -e\",
+              \"sudo mkdir -p /opt/trophyquest/logs\",
+              \"sudo chown -R trophyquest:trophyquest /opt/trophyquest/logs\",
+              \"aws s3api get-object --bucket '${ARTIFACT_S3_BUCKET}' --key '$S3_KEY' /tmp/trophyquest-backend.jar\",
+              \"sudo mv /tmp/trophyquest-backend.jar /opt/trophyquest/trophyquest-backend.jar\",
+              \"sudo chown trophyquest:trophyquest /opt/trophyquest/trophyquest-backend.jar\",
+              \"sudo systemctl restart trophyquest-backend\",
+              \"sudo systemctl status trophyquest-backend --no-pager -l\",
+              \"sudo ls -l /opt/trophyquest/logs || true\"
+            ]" \
+            --query "Command.CommandId" --output text)
+
+          echo "SSM CommandId: $COMMAND_ID"
+
+          set +e
+          aws ssm wait command-executed \
+            --command-id "$COMMAND_ID" \
+            --instance-id "${BACKEND_EC2_INSTANCE_ID}"
+          WAIT_RC=$?
+          set -e
+
+          aws ssm get-command-invocation \
+            --command-id "$COMMAND_ID" \
+            --instance-id "${BACKEND_EC2_INSTANCE_ID}" \
+            --query "{Status:Status,ResponseCode:ResponseCode,StdOut:StandardOutputContent,StdErr:StandardErrorContent}" \
+            --output json
+
+          exit $WAIT_RC
+
+      - name: Write deployment summary
+        env:
+          RELEASE_TAG: ${{ needs.release.outputs.tag }}
+          RELEASE_SHA: ${{ needs.release.outputs.sha }}
+        run: |
+          {
+            echo "## Deployment completed"
+            echo "- Tag: $RELEASE_TAG"
+            echo "- Commit: $RELEASE_SHA"
+          } >> "$GITHUB_STEP_SUMMARY"
