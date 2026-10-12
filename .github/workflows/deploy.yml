@@ -129,8 +129,8 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v6
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
 
       - name: Upload jar to S3 (artifact)
         id: upload
@@ -138,7 +138,7 @@ jobs:
           RELEASE_TAG: ${{ needs.release.outputs.tag }}
           RELEASE_SHA: ${{ needs.release.outputs.sha }}
           JAR_FILE: ${{ steps.build.outputs.jar_path }}
-          ARTIFACT_S3_BUCKET: ${{ secrets.ARTIFACT_S3_BUCKET }}
+          ARTIFACT_S3_BUCKET: ${{ vars.ARTIFACT_S3_BUCKET }}
         run: |
           set -e
           APP_VERSION=${RELEASE_TAG#v}
@@ -160,16 +160,16 @@ jobs:
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v6
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
 
       - name: Deploy on EC2 via SSM
         env:
           RELEASE_TAG: ${{ needs.release.outputs.tag }}
           RELEASE_SHA: ${{ needs.release.outputs.sha }}
           S3_KEY: ${{ needs.build.outputs.s3_key }}
-          ARTIFACT_S3_BUCKET: ${{ secrets.ARTIFACT_S3_BUCKET }}
-          BACKEND_EC2_INSTANCE_ID: ${{ secrets.BACKEND_EC2_INSTANCE_ID }}
+          ARTIFACT_S3_BUCKET: ${{ vars.ARTIFACT_S3_BUCKET }}
+          BACKEND_EC2_INSTANCE_ID: ${{ vars.BACKEND_EC2_INSTANCE_ID }}
         run: |
           set -e
           echo "Using S3_KEY=$S3_KEY"
