@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - include: { file: changesets/001-psn-schema-setup/01-create-psn-schema.yaml, relativeToChangelogFile: true }
+  - include: { file: changesets/001-psn-schema-setup/02-create-set-updated-at-function.yaml, relativeToChangelogFile: true }
+  - include: { file: changesets/001-psn-schema-setup/03-create-player-table.yaml, relativeToChangelogFile: true }
+  - include: { file: changesets/001-psn-schema-setup/04-create-suite-table.yaml, relativeToChangelogFile: true }
+  - include: { file: changesets/001-psn-schema-setup/05-create-group-table.yaml, relativeToChangelogFile: true }
+  - include: { file: changesets/001-psn-schema-setup/06-create-trophy-table.yaml, relativeToChangelogFile: true }
+  - include: { file: changesets/001-psn-schema-setup/07-create-played-suite-table.yaml, relativeToChangelogFile: true }
+  - include: { file: changesets/001-psn-schema-setup/08-create-earned-trophy-table.yaml, relativeToChangelogFile: true }
+
+  - include: { file: changesets/002-igdb-schema-setup/01-create-igdb-schema.yaml, relativeToChangelogFile: true }
+  - include: { file: changesets/002-igdb-schema-setup/02-create-set-updated-at-function.yaml, relativeToChangelogFile: true }
+  - include: { file: changesets/002-igdb-schema-setup/03-create-collection-table.yaml, relativeToChangelogFile: true }
+  - include: { file: changesets/002-igdb-schema-setup/04-create-company-table.yaml, relativeToChangelogFile: true }
+  - include: { file: changesets/002-igdb-schema-setup/05-create-game-table.yaml, relativeToChangelogFile: true }
+  - include: { file: changesets/002-igdb-schema-setup/06-create-screenshot-table.yaml, relativeToChangelogFile: true }
+
+  - include: { file: changesets/003-app-schema-setup/01-create-app-schema.yaml, relativeToChangelogFile: true }
+  - include: { file: changesets/003-app-schema-setup/02-create-set-updated-at-function.yaml, relativeToChangelogFile: true }
+  - include: { file: changesets/003-app-schema-setup/03-create-igdb-candidate-table.yaml, relativeToChangelogFile: true }
+  - include: { file: changesets/003-app-schema-setup/04-create-igdb-matching-table.yaml, relativeToChangelogFile: true }
+  - include: { file: changesets/003-app-schema-setup/05-create-user-table.yaml, relativeToChangelogFile: true }
+  - include: { file: changesets/003-app-schema-setup/06-create-player-view.yaml, relativeToChangelogFile: true }
+  - include: { file: changesets/003-app-schema-setup/07-create-trophy-view.yaml, relativeToChangelogFile: true }
+  - include: { file: changesets/003-app-schema-setup/08-create-earned-trophy-view.yaml, relativeToChangelogFile: true }
+  - include: { file: changesets/003-app-schema-setup/09-create-suite-view.yaml, relativeToChangelogFile: true }
+  - include: { file: changesets/003-app-schema-setup/10-create-played-suite-view.yaml, relativeToChangelogFile: true }
+  - include: { file: changesets/003-app-schema-setup/11-create-game-view.yaml, relativeToChangelogFile: true }
+  - include: { file: changesets/003-app-schema-setup/12-create-played-game-view.yaml, relativeToChangelogFile: true }
+
+  - include: { file: changesets/004-metadata-schema-setup/01-create-metadata-schema.yaml, relativeToChangelogFile: true }
+  - include: { file: changesets/004-metadata-schema-setup/02-create-lambda-monitoring-table.yaml, relativeToChangelogFile: true }

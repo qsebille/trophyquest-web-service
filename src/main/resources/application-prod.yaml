@@ -1,0 +1,21 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${PGHOST}:${PGPORT:5432}/${PGDATABASE}?currentSchema=app
+    username: ${PGUSER}
+    password: ${PGPASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: none
+
+logging:
+  file:
+    name: /opt/trophyquest/logs/backend.log
+  level:
+    root: INFO
+    org.springframework: INFO
+
+app:
+  cors:
+    allowed-origins:
+      - https://trophyquest.fr
+      - https://www.trophyquest.fr

@@ -1,0 +1,37 @@
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    info:
+      access: read_only
+
+spring:
+  application.name: trophyquest-web-service
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://cognito-idp.eu-west-3.amazonaws.com/eu-west-3_F3LbsHccs
+  datasource:
+    url:
+    username:
+    password:
+  jpa:
+    properties:
+      hibernate:
+        default_schema: app
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    default-schema: public
+
+cognito:
+  user-info-uri: https://trophyquest-prod-auth.auth.eu-west-3.amazoncognito.com/oauth2/userInfo
+
+app:
+  cors:
+    allowed-origins: http://localhost:4200

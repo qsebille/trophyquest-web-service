@@ -1,0 +1,38 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004-metadata-schema-setup/02-create-lambda-monitoring-table
+      author: Quentin Sebille
+      changes:
+        - createTable:
+            schemaName: metadata
+            tableName: lambda_monitoring
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_lambda_monitoring
+              - column:
+                  name: lambda_name
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: error_message
+                  type: text
+              - column:
+                  name: end_time
+                  type: timestamptz
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: duration_time_ms
+                  type: int
+                  remarks: Duration time in milliseconds

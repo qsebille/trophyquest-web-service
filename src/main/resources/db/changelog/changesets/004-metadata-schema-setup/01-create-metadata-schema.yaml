@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004-metadata-schema-setup/01-create-metadata-schema
+      author: Quentin Sebille
+      changes:
+        - sql:
+            sql: CREATE SCHEMA IF NOT EXISTS metadata;
