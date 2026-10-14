@@ -3,6 +3,7 @@ package fr.trophyquest.backend.api.home;
 
 import fr.trophyquest.backend.api.home.dto.HomeGameItem;
 import fr.trophyquest.backend.api.home.dto.HomePlayerItem;
+import fr.trophyquest.backend.api.shared.dto.BackgroundImageResponse;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -31,4 +32,8 @@ public class HomeController {
         return homeService.fetchTopPlayers(size);
     }
 
+    @GetMapping("/background")
+    public BackgroundImageResponse fetchBackground() {
+        return homeService.fetchBackground();
+    }
 }

@@ -1,4 +1,4 @@
-package fr.trophyquest.backend.api.exception;
+package fr.trophyquest.backend.api.shared.error;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;

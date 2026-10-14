@@ -1,4 +1,4 @@
-package fr.trophyquest.backend.api.background;
+package fr.trophyquest.backend.api.shared.dto;
 
 import lombok.Builder;
 
