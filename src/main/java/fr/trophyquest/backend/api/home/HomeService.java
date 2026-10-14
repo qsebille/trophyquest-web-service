@@ -4,6 +4,7 @@ import fr.trophyquest.backend.api.home.dto.HomeGameItem;
 import fr.trophyquest.backend.api.home.dto.HomePlayerItem;
 import fr.trophyquest.backend.api.home.mapper.HomeGameItemMapper;
 import fr.trophyquest.backend.api.home.mapper.HomePlayerItemMapper;
+import fr.trophyquest.backend.api.shared.dto.BackgroundImageResponse;
 import fr.trophyquest.backend.domain.projection.RecentGameProjection;
 import fr.trophyquest.backend.domain.projection.RecentPlayerProjection;
 import fr.trophyquest.backend.domain.repository.EarnedTrophyRepository;
@@ -49,9 +50,8 @@ public class HomeService {
                 .toList();
     }
 
-
     /**
-     * Fetch the top players with the most recent earned trophies.
+     * Fetch the top players with the most recently earned trophies.
      *
      * @param size The number of players to fetch
      * @return A list of players
@@ -61,6 +61,17 @@ public class HomeService {
         return topPlayers.stream()
                 .map(homePlayerItemMapper::fromRecentPlayerProjection)
                 .toList();
+    }
+
+    /**
+     * Fetch the background image for the home page. Returns the background image of the most played game.
+     *
+     * @return A background image response
+     */
+    public BackgroundImageResponse fetchBackground() {
+        Instant recentLimit = Instant.now().minus(7, ChronoUnit.DAYS);
+        RecentGameProjection topGame = this.playedGameRepository.searchTopRecent(recentLimit, 1).getFirst();
+        return BackgroundImageResponse.builder().url(topGame.getBackgroundUrl()).build();
     }
 
 }
