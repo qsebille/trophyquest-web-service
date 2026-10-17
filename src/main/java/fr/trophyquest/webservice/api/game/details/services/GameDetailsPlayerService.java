@@ -7,6 +7,7 @@ import fr.trophyquest.webservice.domain.entity.PlayedGame;
 import fr.trophyquest.webservice.domain.repository.PlayedGameRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -34,7 +35,8 @@ public class GameDetailsPlayerService {
      * @return A paginated list of players that played the game
      */
     public Pagination<GamePlayerItem> searchPlayersByGameId(long gameId, int page, int size) {
-        PageRequest pageRequest = PageRequest.of(page, size);
+        Sort sort = Sort.by(Sort.Direction.DESC, "lastPlayedAt");
+        PageRequest pageRequest = PageRequest.of(page, size, sort);
         Page<PlayedGame> playedGames = this.playedGameRepository.findByGameId(gameId, pageRequest);
         List<GamePlayerItem> content = playedGames.getContent().stream()
                 .map(this.gamePlayerItemMapper::fromPlayedGame)
