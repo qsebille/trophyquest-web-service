@@ -55,6 +55,18 @@ public class Game {
     @Column(name = "nb_suites")
     private Integer nbSuites;
 
+    @Column(name = "nb_platinum_trophies")
+    private Integer nbPlatinumTrophies;
+
+    @Column(name = "nb_gold_trophies")
+    private Integer nbGoldTrophies;
+
+    @Column(name = "nb_silver_trophies")
+    private Integer nbSilverTrophies;
+
+    @Column(name = "nb_bronze_trophies")
+    private Integer nbBronzeTrophies;
+
     @Column(name = "nb_players")
     private Integer nbPlayers;
 

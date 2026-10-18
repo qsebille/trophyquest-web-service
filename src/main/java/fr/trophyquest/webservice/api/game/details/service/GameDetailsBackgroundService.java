@@ -1,4 +1,4 @@
-package fr.trophyquest.webservice.api.game.details.services;
+package fr.trophyquest.webservice.api.game.details.service;
 
 import fr.trophyquest.webservice.api.shared.dto.BackgroundImageResponse;
 import fr.trophyquest.webservice.api.shared.error.GameNotFoundException;
