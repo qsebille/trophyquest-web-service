@@ -1,4 +1,4 @@
-package fr.trophyquest.webservice.api.home;
+package fr.trophyquest.webservice.api;
 
 import fr.trophyquest.webservice.IntegrationTestBase;
 import org.junit.jupiter.api.Test;

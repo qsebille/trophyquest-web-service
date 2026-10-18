@@ -1,4 +1,4 @@
-package fr.trophyquest.webservice.api.game;
+package fr.trophyquest.webservice.api;
 
 import fr.trophyquest.webservice.IntegrationTestBase;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,7 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class GameDetailsControllerIT extends IntegrationTestBase {
 
-    private static final String BASE_PATH = "/api/game-details";
+    private static final String BASE_PATH = "/api/game/details";
 
     @Autowired
     MockMvc mockMvc;
