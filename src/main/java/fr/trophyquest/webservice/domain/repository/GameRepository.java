@@ -13,5 +13,5 @@ import java.util.UUID;
 public interface GameRepository extends JpaRepository<Game, UUID> {
     Optional<Game> findFirstById(Long gameId);
 
-    Page<Game> searchByName(String query, Pageable pageable);
+    Page<Game> findByNameContainingIgnoreCase(String query, Pageable pageable);
 }
