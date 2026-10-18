@@ -33,4 +33,15 @@ public interface PlayedGameRepository extends JpaRepository<PlayedGame, UUID> {
     List<RecentGameProjection> searchTopRecent(@Param("since") Instant since, int size);
 
     Page<PlayedGame> findByGameId(long gameId, Pageable pageable);
+
+    @Query("""
+            SELECT g.backgroundUrl
+            FROM PlayedGame pg
+                JOIN pg.game g
+            WHERE g.backgroundUrl IS NOT NULL
+            GROUP BY g.backgroundUrl
+            ORDER BY COUNT(pg) DESC, MAX(pg.lastPlayedAt) DESC
+            LIMIT 1
+            """)
+    String getMostPlayedBackgroundImage();
 }

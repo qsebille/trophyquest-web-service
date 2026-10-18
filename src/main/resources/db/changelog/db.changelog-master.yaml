@@ -30,3 +30,5 @@ databaseChangeLog:
 
   - include: { file: changesets/004-metadata-schema-setup/01-create-metadata-schema.yaml, relativeToChangelogFile: true }
   - include: { file: changesets/004-metadata-schema-setup/02-create-lambda-monitoring-table.yaml, relativeToChangelogFile: true }
+
+  - include: { file: changesets/005-game-search-api/01-replace-game-view.yaml, relativeToChangelogFile: true }

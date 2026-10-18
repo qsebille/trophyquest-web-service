@@ -5,11 +5,11 @@ import fr.trophyquest.webservice.api.game.details.dto.GameDetailsResponse;
 import fr.trophyquest.webservice.api.game.details.dto.GamePlayerItem;
 import fr.trophyquest.webservice.api.game.details.dto.GameSuiteItem;
 import fr.trophyquest.webservice.api.game.details.dto.GameTrophyItem;
-import fr.trophyquest.webservice.api.game.details.services.GameDetailsBackgroundService;
-import fr.trophyquest.webservice.api.game.details.services.GameDetailsPlayerService;
-import fr.trophyquest.webservice.api.game.details.services.GameDetailsService;
-import fr.trophyquest.webservice.api.game.details.services.GameDetailsSuiteService;
-import fr.trophyquest.webservice.api.game.details.services.GameDetailsTrophyService;
+import fr.trophyquest.webservice.api.game.details.service.GameDetailsBackgroundService;
+import fr.trophyquest.webservice.api.game.details.service.GameDetailsPlayerService;
+import fr.trophyquest.webservice.api.game.details.service.GameDetailsService;
+import fr.trophyquest.webservice.api.game.details.service.GameDetailsSuiteService;
+import fr.trophyquest.webservice.api.game.details.service.GameDetailsTrophyService;
 import fr.trophyquest.webservice.api.shared.dto.BackgroundImageResponse;
 import fr.trophyquest.webservice.api.shared.dto.Pagination;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,7 +23,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/game-details")
+@RequestMapping("/api/game/details")
 public class GameDetailsController {
 
     private final GameDetailsService gameDetailsService;
