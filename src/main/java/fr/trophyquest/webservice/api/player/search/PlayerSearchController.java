@@ -1,6 +1,7 @@
 package fr.trophyquest.webservice.api.player.search;
 
 import fr.trophyquest.webservice.api.player.search.dto.PlayerSearchItem;
+import fr.trophyquest.webservice.api.shared.dto.BackgroundImageResponse;
 import fr.trophyquest.webservice.api.shared.dto.Pagination;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,6 +24,11 @@ public class PlayerSearchController {
                                                       @RequestParam(name = "page", defaultValue = "0") int page,
                                                       @RequestParam(name = "size", defaultValue = "20") int size) {
         return playerSearchService.searchPlayers(query, page, size);
+    }
+
+    @GetMapping("/background")
+    public BackgroundImageResponse background() {
+        return playerSearchService.getBackground();
     }
 
 }
