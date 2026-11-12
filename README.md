@@ -73,10 +73,23 @@ The API is accessible under `/api`. Key controllers include:
 ## 🧪 Testing
 
 Integration tests use **Testcontainers** to spin up a PostgreSQL instance.
+Docker must be running before executing the tests.
 
 ```bash
 ./gradlew test
 ```
+
+With Colima on macOS, start the runtime and point Testcontainers to its socket:
+
+```bash
+colima start
+DOCKER_HOST="unix://$HOME/.colima/default/docker.sock" \
+TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock \
+bash gradlew test
+```
+
+When running tests from an IDE, set the same `DOCKER_HOST` (using an absolute path)
+and `TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE` environment variables in the test run configuration.
 
 ## 📄 License
 
