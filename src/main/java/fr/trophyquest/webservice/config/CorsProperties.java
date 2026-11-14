@@ -1,14 +1,16 @@
 package fr.trophyquest.webservice.config;
 
 import lombok.Getter;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.Setter;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
 
 @Configuration
+@ConfigurationProperties(prefix = "app.cors")
 @Getter
+@Setter
 public class CorsProperties {
-    @Value("${app.cors.allowed-origins}")
     private List<String> allowedOrigins;
 }
