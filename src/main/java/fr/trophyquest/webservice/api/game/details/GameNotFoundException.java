@@ -1,4 +1,4 @@
-package fr.trophyquest.webservice.api.shared.error;
+package fr.trophyquest.webservice.api.game.details;
 
 public class GameNotFoundException extends RuntimeException {
     public GameNotFoundException(Long gameId) {

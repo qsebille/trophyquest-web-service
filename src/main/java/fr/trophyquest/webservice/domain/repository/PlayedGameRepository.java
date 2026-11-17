@@ -44,4 +44,14 @@ public interface PlayedGameRepository extends JpaRepository<PlayedGame, UUID> {
             LIMIT 1
             """)
     String getMostPlayedBackgroundImage();
+
+    @Query("""
+            SELECT g.backgroundUrl
+            FROM PlayedGame pg
+                JOIN pg.game g
+            WHERE pg.player.id = :playerId
+            ORDER BY pg.lastPlayedAt DESC NULLS LAST, g.id DESC
+            LIMIT 1
+            """)
+    String getLastPlayedBackgroundImage(@Param("playerId") UUID playerId);
 }

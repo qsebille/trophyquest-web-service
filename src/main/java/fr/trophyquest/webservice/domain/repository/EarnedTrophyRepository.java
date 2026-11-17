@@ -2,6 +2,8 @@ package fr.trophyquest.webservice.domain.repository;
 
 import fr.trophyquest.webservice.domain.entity.EarnedTrophy;
 import fr.trophyquest.webservice.domain.projection.RecentPlayerProjection;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -31,6 +33,9 @@ public interface EarnedTrophyRepository extends JpaRepository<EarnedTrophy, UUID
             LIMIT :size
             """)
     List<RecentPlayerProjection> searchTopRecent(@Param("since") Instant since, int size);
+
+    @EntityGraph(attributePaths = {"trophy", "trophy.suite"})
+    Page<EarnedTrophy> findByPlayerId(UUID playerId, Pageable pageable);
 
     @EntityGraph(attributePaths = {"trophy"})
     List<EarnedTrophy> findAllByTrophySuiteIdAndPlayerId(UUID suiteId, UUID playerId);
