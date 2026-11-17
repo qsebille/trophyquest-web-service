@@ -7,6 +7,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -126,14 +127,14 @@ class PlayerProfileControllerIT extends IntegrationTestBase {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"", "/suites", "/trophies"})
+    @ValueSource(strings = {"", "/suites", "/trophies", "/background"})
     void should_return_not_found_for_unknown_player(String suffix) throws Exception {
         mockMvc.perform(get(BASE_PATH + "00000099-0000-0000-0000-000000000000" + suffix))
                 .andExpect(status().isNotFound());
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"", "/suites", "/trophies"})
+    @ValueSource(strings = {"", "/suites", "/trophies", "/background"})
     void should_reject_invalid_player_id(String suffix) throws Exception {
         mockMvc.perform(get(BASE_PATH + "invalid-id" + suffix)).andExpect(status().isBadRequest());
     }
@@ -148,4 +149,38 @@ class PlayerProfileControllerIT extends IntegrationTestBase {
         mockMvc.perform(get(BASE_PATH + PLAYER_ID + suffix).param("size", "-1"))
                 .andExpect(status().isBadRequest());
     }
+    @Test
+    void should_return_background_of_players_latest_game() throws Exception {
+        runScript("/sql/player/insert-profile-backgrounds.sql");
+        mockMvc.perform(get(BASE_PATH + PLAYER_ID + "/background"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.url").value("latest-background.png"));
+    }
+
+    @Test
+    void should_return_empty_background_without_played_games() throws Exception {
+        mockMvc.perform(get(BASE_PATH + NEW_PLAYER_ID + "/background"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.url").value(""));
+    }
+
+    @Test
+    void should_return_empty_background_when_latest_game_has_no_image() throws Exception {
+        runScript("/sql/player/insert-profile-backgrounds.sql");
+        new JdbcTemplate(dataSource).update("UPDATE igdb.game SET igdb_background_url = NULL WHERE id = 1002");
+        mockMvc.perform(get(BASE_PATH + PLAYER_ID + "/background"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.url").value(""));
+    }
+
+    @Test
+    void should_prioritize_known_play_dates_over_missing_dates() throws Exception {
+        runScript("/sql/player/insert-profile-backgrounds.sql");
+        new JdbcTemplate(dataSource).update("UPDATE psn.played_suite SET last_played_at = NULL WHERE suite_id = ?::uuid",
+                "a0000003-0000-0000-0000-000000000000");
+        mockMvc.perform(get(BASE_PATH + PLAYER_ID + "/background"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.url").value("older-background.png"));
+    }
+
 }

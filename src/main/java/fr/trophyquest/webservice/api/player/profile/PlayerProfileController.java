@@ -4,6 +4,8 @@ import fr.trophyquest.webservice.api.player.profile.dto.PlayerSummaryResponse;
 import fr.trophyquest.webservice.api.player.profile.dto.PlayerSuiteItem;
 import fr.trophyquest.webservice.api.player.profile.dto.PlayerTrophyItem;
 import fr.trophyquest.webservice.api.player.profile.service.PlayerProfileService;
+import fr.trophyquest.webservice.api.player.profile.service.PlayerProfileBackgroundService;
+import fr.trophyquest.webservice.api.shared.dto.BackgroundImageResponse;
 import fr.trophyquest.webservice.api.player.profile.service.PlayerProfileSuiteService;
 import fr.trophyquest.webservice.api.player.profile.service.PlayerProfileTrophyService;
 import fr.trophyquest.webservice.api.shared.dto.Pagination;
@@ -21,12 +23,15 @@ import java.util.UUID;
 @RequestMapping("/api/player/profile")
 public class PlayerProfileController {
     private final PlayerProfileService profileService;
+    private final PlayerProfileBackgroundService backgroundService;
     private final PlayerProfileSuiteService suiteService;
     private final PlayerProfileTrophyService trophyService;
 
     public PlayerProfileController(PlayerProfileService profileService, PlayerProfileSuiteService suiteService,
-                                   PlayerProfileTrophyService trophyService) {
+                                   PlayerProfileTrophyService trophyService,
+                                   PlayerProfileBackgroundService backgroundService) {
         this.profileService = profileService;
+        this.backgroundService = backgroundService;
         this.suiteService = suiteService;
         this.trophyService = trophyService;
     }
@@ -48,6 +53,11 @@ public class PlayerProfileController {
             @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
         validatePagination(page, size);
         return trophyService.searchByPlayerId(playerId, page, size);
+    }
+
+    @GetMapping("/{playerId}/background")
+    public BackgroundImageResponse fetchBackgroundByPlayerId(@PathVariable UUID playerId) {
+        return backgroundService.fetchBackgroundByPlayerId(playerId);
     }
 
     private void validatePagination(int page, int size) {
