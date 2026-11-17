@@ -1,8 +1,8 @@
 package fr.trophyquest.webservice.api.game.details.service;
 
-import fr.trophyquest.webservice.api.game.details.dto.GamePlayerItem;
-import fr.trophyquest.webservice.api.game.details.mappers.GamePlayerItemMapper;
 import fr.trophyquest.webservice.api.shared.dto.Pagination;
+import fr.trophyquest.webservice.api.shared.dto.PlayerItem;
+import fr.trophyquest.webservice.api.shared.mapper.PlayerItemMapper;
 import fr.trophyquest.webservice.domain.entity.PlayedGame;
 import fr.trophyquest.webservice.domain.repository.PlayedGameRepository;
 import org.springframework.data.domain.Page;
@@ -18,12 +18,12 @@ public class GameDetailsPlayerService {
 
     private final PlayedGameRepository playedGameRepository;
 
-    private final GamePlayerItemMapper gamePlayerItemMapper;
+    private final PlayerItemMapper playerItemMapper;
 
     public GameDetailsPlayerService(PlayedGameRepository playedGameRepository,
-                                    GamePlayerItemMapper gamePlayerItemMapper) {
+                                    PlayerItemMapper playerItemMapper) {
         this.playedGameRepository = playedGameRepository;
-        this.gamePlayerItemMapper = gamePlayerItemMapper;
+        this.playerItemMapper = playerItemMapper;
     }
 
     /**
@@ -34,14 +34,14 @@ public class GameDetailsPlayerService {
      * @param size   Page size for pagination
      * @return A paginated list of players that played the game
      */
-    public Pagination<GamePlayerItem> searchPlayersByGameId(long gameId, int page, int size) {
+    public Pagination<PlayerItem> searchPlayersByGameId(long gameId, int page, int size) {
         Sort sort = Sort.by(Sort.Direction.DESC, "lastPlayedAt");
         PageRequest pageRequest = PageRequest.of(page, size, sort);
         Page<PlayedGame> playedGames = this.playedGameRepository.findByGameId(gameId, pageRequest);
-        List<GamePlayerItem> content = playedGames.getContent().stream()
-                .map(this.gamePlayerItemMapper::fromPlayedGame)
+        List<PlayerItem> content = playedGames.getContent().stream()
+                .map(playedGame -> playerItemMapper.fromPlayer(playedGame.getPlayer(), playedGame.getLastPlayedAt()))
                 .collect(Collectors.toList());
-        return Pagination.<GamePlayerItem>builder()
+        return Pagination.<PlayerItem>builder()
                 .content(content)
                 .total(playedGames.getTotalElements())
                 .page(page)

@@ -1,7 +1,7 @@
 package fr.trophyquest.webservice.api.game.details.service;
 
-import fr.trophyquest.webservice.api.game.details.dto.GameTrophyItem;
-import fr.trophyquest.webservice.api.game.details.mappers.GameTrophyItemMapper;
+import fr.trophyquest.webservice.api.shared.dto.TrophyItem;
+import fr.trophyquest.webservice.api.shared.mapper.TrophyItemMapper;
 import fr.trophyquest.webservice.domain.entity.EarnedTrophy;
 import fr.trophyquest.webservice.domain.repository.EarnedTrophyRepository;
 import fr.trophyquest.webservice.domain.repository.TrophyRepository;
@@ -19,14 +19,14 @@ public class GameDetailsTrophyService {
 
     private final EarnedTrophyRepository earnedTrophyRepository;
     private final TrophyRepository trophyRepository;
-    private final GameTrophyItemMapper gameTrophyItemMapper;
+    private final TrophyItemMapper trophyItemMapper;
 
     public GameDetailsTrophyService(EarnedTrophyRepository earnedTrophyRepository,
                                     TrophyRepository trophyRepository,
-                                    GameTrophyItemMapper gameTrophyItemMapper) {
+                                    TrophyItemMapper trophyItemMapper) {
         this.earnedTrophyRepository = earnedTrophyRepository;
         this.trophyRepository = trophyRepository;
-        this.gameTrophyItemMapper = gameTrophyItemMapper;
+        this.trophyItemMapper = trophyItemMapper;
     }
 
     /**
@@ -36,10 +36,10 @@ public class GameDetailsTrophyService {
      * @param playerId ID of the player. If not provided, all trophies will be returned with no earned date
      * @return A list of trophies.
      */
-    public List<GameTrophyItem> fetchTrophiesForSuite(UUID suiteId, Optional<UUID> playerId) {
-        List<GameTrophyItem> trophies = this.trophyRepository.findAllBySuiteId(suiteId)
+    public List<TrophyItem> fetchTrophiesForSuite(UUID suiteId, Optional<UUID> playerId) {
+        List<TrophyItem> trophies = this.trophyRepository.findAllBySuiteId(suiteId)
                 .stream()
-                .map(this.gameTrophyItemMapper::fromTrophy)
+                .map(this.trophyItemMapper::fromTrophy)
                 .toList();
 
         if (playerId.isEmpty()) {
@@ -49,13 +49,14 @@ public class GameDetailsTrophyService {
         Map<UUID, Instant> earnedAtByTrophyId = this.earnedTrophyRepository
                 .findAllByTrophySuiteIdAndPlayerId(suiteId, playerId.orElse(null))
                 .stream()
+                .filter(earnedTrophy -> earnedTrophy.getEarnedAt() != null)
                 .collect(Collectors.toMap(
                         earnedTrophy -> earnedTrophy.getTrophy().getId(),
                         EarnedTrophy::getEarnedAt
                 ));
 
         return trophies.stream()
-                .map(trophy -> new GameTrophyItem(
+                .map(trophy -> new TrophyItem(
                         trophy.trophyId(),
                         trophy.rank(),
                         trophy.title(),

@@ -2,9 +2,7 @@ package fr.trophyquest.webservice.api.game.details;
 
 
 import fr.trophyquest.webservice.api.game.details.dto.GameDetailsResponse;
-import fr.trophyquest.webservice.api.game.details.dto.GamePlayerItem;
 import fr.trophyquest.webservice.api.game.details.dto.GameSuiteItem;
-import fr.trophyquest.webservice.api.game.details.dto.GameTrophyItem;
 import fr.trophyquest.webservice.api.game.details.service.GameDetailsBackgroundService;
 import fr.trophyquest.webservice.api.game.details.service.GameDetailsPlayerService;
 import fr.trophyquest.webservice.api.game.details.service.GameDetailsService;
@@ -12,6 +10,8 @@ import fr.trophyquest.webservice.api.game.details.service.GameDetailsSuiteServic
 import fr.trophyquest.webservice.api.game.details.service.GameDetailsTrophyService;
 import fr.trophyquest.webservice.api.shared.dto.BackgroundImageResponse;
 import fr.trophyquest.webservice.api.shared.dto.Pagination;
+import fr.trophyquest.webservice.api.shared.dto.PlayerItem;
+import fr.trophyquest.webservice.api.shared.dto.TrophyItem;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -56,14 +56,14 @@ public class GameDetailsController {
     }
 
     @GetMapping("/{gameId}/players")
-    public Pagination<GamePlayerItem> searchPlayersByGameId(@PathVariable long gameId,
+    public Pagination<PlayerItem> searchPlayersByGameId(@PathVariable long gameId,
                                                             @RequestParam(name = "page", defaultValue = "0") int page,
                                                             @RequestParam(name = "size", defaultValue = "10") int size) {
         return gameDetailsPlayerService.searchPlayersByGameId(gameId, page, size);
     }
 
     @GetMapping("/suite/{suiteId}/trophies")
-    public List<GameTrophyItem> fetchTrophiesBySuiteId(@PathVariable UUID suiteId,
+    public List<TrophyItem> fetchTrophiesBySuiteId(@PathVariable UUID suiteId,
                                                        @RequestParam(name = "playerId", required = false) Optional<UUID> playerId) {
         return gameDetailsTrophyService.fetchTrophiesForSuite(suiteId, playerId);
     }

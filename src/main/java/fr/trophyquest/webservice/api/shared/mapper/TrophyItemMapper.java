@@ -1,16 +1,16 @@
-package fr.trophyquest.webservice.api.game.details.mappers;
+package fr.trophyquest.webservice.api.shared.mapper;
 
-import fr.trophyquest.webservice.api.game.details.dto.GameTrophyItem;
+import fr.trophyquest.webservice.api.shared.dto.TrophyItem;
 import fr.trophyquest.webservice.domain.entity.Trophy;
 import org.springframework.stereotype.Component;
 
 @Component
-public class GameTrophyItemMapper {
-    public GameTrophyItemMapper() {
+public class TrophyItemMapper {
+    public TrophyItemMapper() {
     }
 
-    public GameTrophyItem fromTrophy(Trophy trophy) {
-        return GameTrophyItem.builder()
+    public TrophyItem fromTrophy(Trophy trophy) {
+        return TrophyItem.builder()
                 .trophyId(trophy.getId())
                 .rank(trophy.getRank())
                 .title(trophy.getTitle())
