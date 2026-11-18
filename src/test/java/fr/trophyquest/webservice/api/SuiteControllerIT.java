@@ -55,6 +55,31 @@ class SuiteControllerIT extends IntegrationTestBase {
     }
 
     @Test
+    void should_return_the_associated_game_background() throws Exception {
+        mockMvc.perform(get(SUITE_PATH + "/background", SUITE_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.url").value("tr-background.png"));
+    }
+
+    @Test
+    void should_return_no_background_when_the_suite_has_no_associated_game() throws Exception {
+        new JdbcTemplate(dataSource).update("DELETE FROM app.igdb_matching WHERE suite_id = ?::uuid", SUITE_ID);
+
+        mockMvc.perform(get(SUITE_PATH + "/background", SUITE_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.url").value(nullValue()));
+    }
+
+    @Test
+    void should_return_no_background_when_the_associated_game_has_no_image() throws Exception {
+        new JdbcTemplate(dataSource).update("UPDATE igdb.game SET igdb_background_url = NULL WHERE id = 1001");
+
+        mockMvc.perform(get(SUITE_PATH + "/background", SUITE_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.url").value(nullValue()));
+    }
+
+    @Test
     void should_paginate_players_and_use_activity_from_the_requested_suite() throws Exception {
         new JdbcTemplate(dataSource).update("""
                 INSERT INTO psn.played_suite (player_id, suite_id, last_played_at)
@@ -100,7 +125,8 @@ class SuiteControllerIT extends IntegrationTestBase {
 
     @Test
     void should_return_not_found_for_unknown_suites() throws Exception {
-        for (String path : new String[]{SUITE_PATH, SUITE_PATH + "/players", SUITE_PATH + "/trophies"}) {
+        for (String path : new String[]{SUITE_PATH, SUITE_PATH + "/players", SUITE_PATH + "/trophies",
+                SUITE_PATH + "/background"}) {
             mockMvc.perform(get(path, UNKNOWN_SUITE_ID)).andExpect(status().isNotFound());
         }
     }

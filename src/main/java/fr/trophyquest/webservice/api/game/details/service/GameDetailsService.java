@@ -1,8 +1,8 @@
 package fr.trophyquest.webservice.api.game.details.service;
 
-import fr.trophyquest.webservice.api.game.details.GameNotFoundException;
 import fr.trophyquest.webservice.api.game.details.dto.GameDetailsResponse;
 import fr.trophyquest.webservice.api.game.details.mappers.GameDetailsResponseMapper;
+import fr.trophyquest.webservice.api.shared.error.GameNotFoundException;
 import fr.trophyquest.webservice.domain.repository.GameRepository;
 import org.springframework.stereotype.Service;
 

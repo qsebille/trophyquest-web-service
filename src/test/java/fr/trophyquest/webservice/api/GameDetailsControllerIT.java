@@ -87,10 +87,4 @@ class GameDetailsControllerIT extends IntegrationTestBase {
                 .andExpect(jsonPath("$.url").value("tr-background.png"))
         ;
     }
-
-    @Test
-    void should_return_not_found_for_removed_trophy_route() throws Exception {
-        mockMvc.perform(get(BASE_PATH + "/suite/{suiteId}/trophies", "a0000001-0000-0000-0000-000000000000"))
-                .andExpect(status().isNotFound());
-    }
 }

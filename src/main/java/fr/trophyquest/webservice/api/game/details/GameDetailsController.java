@@ -3,12 +3,12 @@ package fr.trophyquest.webservice.api.game.details;
 
 import fr.trophyquest.webservice.api.game.details.dto.GameDetailsResponse;
 import fr.trophyquest.webservice.api.game.details.dto.GameSuiteItem;
-import fr.trophyquest.webservice.api.game.details.service.GameDetailsBackgroundService;
 import fr.trophyquest.webservice.api.game.details.service.GameDetailsPlayerService;
 import fr.trophyquest.webservice.api.game.details.service.GameDetailsService;
 import fr.trophyquest.webservice.api.game.details.service.GameDetailsSuiteService;
 import fr.trophyquest.webservice.api.shared.dto.BackgroundImageResponse;
 import fr.trophyquest.webservice.api.shared.dto.PlayerItem;
+import fr.trophyquest.webservice.api.shared.service.GameBackgroundService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,17 +26,17 @@ public class GameDetailsController {
     private final GameDetailsService gameDetailsService;
     private final GameDetailsPlayerService gameDetailsPlayerService;
     private final GameDetailsSuiteService gameDetailsSuiteService;
-    private final GameDetailsBackgroundService gameDetailsBackgroundService;
+    private final GameBackgroundService gameBackgroundService;
 
 
     public GameDetailsController(GameDetailsService gameDetailsService,
                                  GameDetailsPlayerService gameDetailsPlayerService,
                                  GameDetailsSuiteService gameDetailsSuiteService,
-                                 GameDetailsBackgroundService gameDetailsBackgroundService) {
+                                 GameBackgroundService gameBackgroundService) {
         this.gameDetailsService = gameDetailsService;
         this.gameDetailsPlayerService = gameDetailsPlayerService;
         this.gameDetailsSuiteService = gameDetailsSuiteService;
-        this.gameDetailsBackgroundService = gameDetailsBackgroundService;
+        this.gameBackgroundService = gameBackgroundService;
     }
 
     @GetMapping("/{gameId}")
@@ -60,7 +60,7 @@ public class GameDetailsController {
 
     @GetMapping("/{gameId}/background")
     public BackgroundImageResponse fetchBackgroundByGameId(@PathVariable long gameId) {
-        return gameDetailsBackgroundService.fetchBackgroundByGameId(gameId);
+        return gameBackgroundService.fetchBackgroundByGameId(gameId);
     }
 
 }

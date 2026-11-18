@@ -1,5 +1,6 @@
 package fr.trophyquest.webservice.api.suite;
 
+import fr.trophyquest.webservice.api.shared.dto.BackgroundImageResponse;
 import fr.trophyquest.webservice.api.shared.dto.Pagination;
 import fr.trophyquest.webservice.api.shared.dto.PlayerItem;
 import fr.trophyquest.webservice.api.shared.dto.TrophyItem;
@@ -28,6 +29,11 @@ public class SuiteController {
     @GetMapping("/{suiteId}")
     public SuiteDetailsResponse fetchDetailsBySuiteId(@PathVariable UUID suiteId) {
         return suiteService.fetchDetailsBySuiteId(suiteId);
+    }
+
+    @GetMapping("/{suiteId}/background")
+    public BackgroundImageResponse fetchBackgroundBySuiteId(@PathVariable UUID suiteId) {
+        return suiteService.fetchBackgroundBySuiteId(suiteId);
     }
 
     @GetMapping("/{suiteId}/players")

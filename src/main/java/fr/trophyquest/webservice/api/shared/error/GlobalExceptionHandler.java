@@ -1,6 +1,5 @@
 package fr.trophyquest.webservice.api.shared.error;
 
-import fr.trophyquest.webservice.api.game.details.GameNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
