@@ -1,4 +1,4 @@
-package fr.trophyquest.webservice.api.game.details.service;
+package fr.trophyquest.webservice.api.suite;
 
 import fr.trophyquest.webservice.api.shared.dto.TrophyItem;
 import fr.trophyquest.webservice.api.shared.mapper.TrophyItemMapper;
@@ -15,15 +15,15 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
-public class GameDetailsTrophyService {
+public class SuiteTrophyService {
 
     private final EarnedTrophyRepository earnedTrophyRepository;
     private final TrophyRepository trophyRepository;
     private final TrophyItemMapper trophyItemMapper;
 
-    public GameDetailsTrophyService(EarnedTrophyRepository earnedTrophyRepository,
-                                    TrophyRepository trophyRepository,
-                                    TrophyItemMapper trophyItemMapper) {
+    public SuiteTrophyService(EarnedTrophyRepository earnedTrophyRepository,
+                              TrophyRepository trophyRepository,
+                              TrophyItemMapper trophyItemMapper) {
         this.earnedTrophyRepository = earnedTrophyRepository;
         this.trophyRepository = trophyRepository;
         this.trophyItemMapper = trophyItemMapper;

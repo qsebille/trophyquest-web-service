@@ -1,6 +1,5 @@
 package fr.trophyquest.webservice.api.suite;
 
-import fr.trophyquest.webservice.api.game.details.service.GameDetailsTrophyService;
 import fr.trophyquest.webservice.api.shared.dto.Pagination;
 import fr.trophyquest.webservice.api.shared.dto.PlayerItem;
 import fr.trophyquest.webservice.api.shared.dto.TrophyItem;
@@ -25,12 +24,12 @@ public class SuiteService {
     private final SuiteRepository suiteRepository;
     private final PlayedSuiteRepository playedSuiteRepository;
     private final PlayerItemMapper playerMapper;
-    private final GameDetailsTrophyService trophyService;
+    private final SuiteTrophyService trophyService;
 
     public SuiteService(SuiteRepository suiteRepository,
                         PlayedSuiteRepository playedSuiteRepository,
                         PlayerItemMapper playerMapper,
-                        GameDetailsTrophyService trophyService) {
+                        SuiteTrophyService trophyService) {
         this.suiteRepository = suiteRepository;
         this.playedSuiteRepository = playedSuiteRepository;
         this.playerMapper = playerMapper;

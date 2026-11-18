@@ -7,20 +7,17 @@ import fr.trophyquest.webservice.api.game.details.service.GameDetailsBackgroundS
 import fr.trophyquest.webservice.api.game.details.service.GameDetailsPlayerService;
 import fr.trophyquest.webservice.api.game.details.service.GameDetailsService;
 import fr.trophyquest.webservice.api.game.details.service.GameDetailsSuiteService;
-import fr.trophyquest.webservice.api.game.details.service.GameDetailsTrophyService;
 import fr.trophyquest.webservice.api.shared.dto.BackgroundImageResponse;
-import fr.trophyquest.webservice.api.shared.dto.Pagination;
 import fr.trophyquest.webservice.api.shared.dto.PlayerItem;
-import fr.trophyquest.webservice.api.shared.dto.TrophyItem;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/game/details")
@@ -29,19 +26,16 @@ public class GameDetailsController {
     private final GameDetailsService gameDetailsService;
     private final GameDetailsPlayerService gameDetailsPlayerService;
     private final GameDetailsSuiteService gameDetailsSuiteService;
-    private final GameDetailsTrophyService gameDetailsTrophyService;
     private final GameDetailsBackgroundService gameDetailsBackgroundService;
 
 
     public GameDetailsController(GameDetailsService gameDetailsService,
                                  GameDetailsPlayerService gameDetailsPlayerService,
                                  GameDetailsSuiteService gameDetailsSuiteService,
-                                 GameDetailsTrophyService gameDetailsTrophyService,
                                  GameDetailsBackgroundService gameDetailsBackgroundService) {
         this.gameDetailsService = gameDetailsService;
         this.gameDetailsPlayerService = gameDetailsPlayerService;
         this.gameDetailsSuiteService = gameDetailsSuiteService;
-        this.gameDetailsTrophyService = gameDetailsTrophyService;
         this.gameDetailsBackgroundService = gameDetailsBackgroundService;
     }
 
@@ -56,16 +50,12 @@ public class GameDetailsController {
     }
 
     @GetMapping("/{gameId}/players")
-    public Pagination<PlayerItem> searchPlayersByGameId(@PathVariable long gameId,
-                                                            @RequestParam(name = "page", defaultValue = "0") int page,
-                                                            @RequestParam(name = "size", defaultValue = "10") int size) {
-        return gameDetailsPlayerService.searchPlayersByGameId(gameId, page, size);
-    }
-
-    @GetMapping("/suite/{suiteId}/trophies")
-    public List<TrophyItem> fetchTrophiesBySuiteId(@PathVariable UUID suiteId,
-                                                       @RequestParam(name = "playerId", required = false) Optional<UUID> playerId) {
-        return gameDetailsTrophyService.fetchTrophiesForSuite(suiteId, playerId);
+    public List<PlayerItem> fetchPlayersByGameId(@PathVariable long gameId,
+                                                 @RequestParam(defaultValue = "10") int size) {
+        if (size < 1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Size must be positive");
+        }
+        return gameDetailsPlayerService.fetchPlayersByGameId(gameId, size);
     }
 
     @GetMapping("/{gameId}/background")

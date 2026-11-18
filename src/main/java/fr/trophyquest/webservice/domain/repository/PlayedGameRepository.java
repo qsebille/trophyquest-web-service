@@ -2,8 +2,6 @@ package fr.trophyquest.webservice.domain.repository;
 
 import fr.trophyquest.webservice.domain.entity.PlayedGame;
 import fr.trophyquest.webservice.domain.projection.RecentGameProjection;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -32,7 +30,15 @@ public interface PlayedGameRepository extends JpaRepository<PlayedGame, UUID> {
             """)
     List<RecentGameProjection> searchTopRecent(@Param("since") Instant since, int size);
 
-    Page<PlayedGame> findByGameId(long gameId, Pageable pageable);
+    @Query("""
+            SELECT pg
+            FROM PlayedGame pg
+            JOIN FETCH pg.player
+            WHERE pg.game.id = :gameId
+            ORDER BY pg.lastPlayedAt DESC NULLS LAST, pg.player.id
+            LIMIT :size
+            """)
+    List<PlayedGame> findRecentPlayersByGameId(@Param("gameId") long gameId, @Param("size") int size);
 
     @Query("""
             SELECT g.backgroundUrl

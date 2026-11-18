@@ -64,11 +64,12 @@ cd trophyquest-web-service
 
 The API is accessible under `/api`. Key controllers include:
 
-- **PlayerController** (`/api/player`): Manage players, search profiles, and fetch stats.
-- **GameController** (`/api/game`): Access game information and recently played games.
-- **TrophyController** (`/api/trophy`): Global trophy statistics.
-- **TrophySuiteController** (`/api/trophy-suite`): Details about trophy lists and earned trophies.
-- **IgdbCandidateController** (`/api/igdb-candidate`): Manage mappings between PSN games and IGDB entries.
+- `/api/home` serves featured games, players and a background image.
+- `/api/game/search` and `/api/game/details` serve game search, details, suites, recent players and background images.
+- `/api/player/search` and `/api/player/profile` serve player search, profiles, played suites, earned trophies and background images.
+- `/api/suite/{suiteId}` serves suite details. Its `/players` and `/trophies` routes list players and trophies for the suite.
+- `/api/association` manages associations between PlayStation suites and IGDB games.
+- `/api/auth/me` returns the current authenticated user.
 
 ## 🧪 Testing
 
