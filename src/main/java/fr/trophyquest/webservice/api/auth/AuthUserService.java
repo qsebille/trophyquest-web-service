@@ -22,8 +22,19 @@ public class AuthUserService {
     }
 
     public AuthUserResponse fetchCurrentUser(CognitoUserInfo cognitoUserInfo) {
+        User user = findOrCreate(cognitoUserInfo);
+        return authUserMapper.toDTO(user, cognitoUserInfo.preferredUsername());
+    }
+
+    public AuthUserResponse updateDisplayName(CognitoUserInfo cognitoUserInfo, String displayName) {
+        User user = findOrCreate(cognitoUserInfo);
+        user.setDisplayName(displayName);
+        return authUserMapper.toDTO(userRepository.save(user), displayName);
+    }
+
+    private User findOrCreate(CognitoUserInfo cognitoUserInfo) {
         String cognitoSub = cognitoUserInfo.sub();
-        User user = this.userRepository.findByCognitoSub(cognitoSub)
+        return this.userRepository.findByCognitoSub(cognitoSub)
                 .orElseGet(() -> {
                     try {
                         return createAndSaveFromCognito(cognitoUserInfo);
@@ -32,8 +43,6 @@ public class AuthUserService {
                                 .orElseThrow(() -> e);
                     }
                 });
-
-        return authUserMapper.toDTO(user);
     }
 
     protected User createAndSaveFromCognito(CognitoUserInfo cognitoUserInfo) {

@@ -2,6 +2,7 @@ package fr.trophyquest.webservice.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -20,6 +21,8 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.PUT, "/api/auth/me")
+                        .hasAuthority("SCOPE_aws.cognito.signin.user.admin")
                         .requestMatchers("/api/auth/**").authenticated()
                         .anyRequest().permitAll()
                 )
