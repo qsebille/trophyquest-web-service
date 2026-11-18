@@ -47,7 +47,7 @@ class AuthControllerTest {
     );
 
     @Test
-    void updatesTheAuthenticatedUsersPreferredUsernameBeforeSavingIt() {
+    void should_update_the_authenticated_users_preferred_username_before_saving_it() {
         User user = new User();
         user.setId(UUID.randomUUID());
         user.setDisplayName("Camille");
@@ -67,7 +67,7 @@ class AuthControllerTest {
     }
 
     @Test
-    void keepsTheLocalProfileWhenCognitoRejectsTheUpdate() {
+    void should_keep_the_local_profile_when_cognito_rejects_the_update() {
         expectUserInfo("Camille");
         expectNicknameUpdate().andRespond(withBadRequest().header("x-amzn-errortype", "AliasExistsException"));
 
@@ -81,7 +81,7 @@ class AuthControllerTest {
     }
 
     @Test
-    void readsTheCurrentNicknameFromCognitoEvenIfTheLocalCopyIsOlder() {
+    void should_read_the_current_nickname_from_cognito_when_the_local_copy_is_older() {
         User user = new User();
         user.setDisplayName("Camille");
         when(users.findByCognitoSub("cognito-user")).thenReturn(Optional.of(user));
