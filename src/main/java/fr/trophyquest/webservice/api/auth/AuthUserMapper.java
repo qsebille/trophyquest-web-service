@@ -9,11 +9,11 @@ public class AuthUserMapper {
     public AuthUserMapper() {
     }
 
-    public AuthUserResponse toDTO(User entity) {
+    public AuthUserResponse toDTO(User entity, String displayName) {
         return AuthUserResponse.builder()
                 .id(entity.getId())
                 .email(entity.getEmail())
-                .displayName(entity.getDisplayName())
+                .displayName(displayName)
                 .build();
     }
 }
