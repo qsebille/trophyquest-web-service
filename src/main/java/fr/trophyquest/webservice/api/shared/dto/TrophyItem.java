@@ -1,4 +1,4 @@
-package fr.trophyquest.webservice.api.game.details.dto;
+package fr.trophyquest.webservice.api.shared.dto;
 
 import lombok.Builder;
 
@@ -6,7 +6,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Builder
-public record GameTrophyItem(
+public record TrophyItem(
         UUID trophyId,
         int rank,
         String title,

@@ -4,6 +4,7 @@ import fr.trophyquest.webservice.IntegrationTestBase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -58,15 +59,25 @@ class GameDetailsControllerIT extends IntegrationTestBase {
     }
 
     @Test
-    void should_return_players() throws Exception {
+    void should_return_recent_players_with_a_size_limit() throws Exception {
+        new JdbcTemplate(dataSource).update("""
+                INSERT INTO psn.played_suite (player_id, suite_id, last_played_at)
+                VALUES ('00000002-0000-0000-0000-000000000000',
+                        'a0000001-0000-0000-0000-000000000000', '2027-01-01T00:00:00Z')
+                """);
+
+        mockMvc.perform(get(BASE_PATH + "/1001/players").param("size", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].pseudo").value("Another player"))
+                .andExpect(jsonPath("$[1]").doesNotExist());
+
         mockMvc.perform(get(BASE_PATH + "/1001/players"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.total").value(1))
-                .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content[0].pseudo").value("Lofrings"))
-                .andExpect(jsonPath("$.content[0].avatarUrl").value("lofrings.png"))
-                .andExpect(jsonPath("$.content[1]").doesNotExist())
-        ;
+                .andExpect(jsonPath("$[1].pseudo").value("Lofrings"))
+                .andExpect(jsonPath("$[1].avatarUrl").value("lofrings.png"));
+
+        mockMvc.perform(get(BASE_PATH + "/1001/players").param("size", "0"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -76,77 +87,4 @@ class GameDetailsControllerIT extends IntegrationTestBase {
                 .andExpect(jsonPath("$.url").value("tr-background.png"))
         ;
     }
-
-    @Test
-    void should_return_suite_trophies() throws Exception {
-        String PLAYER_ID = "00000001-0000-0000-0000-000000000000";
-        String TR1_ID = "a0000001-0000-0000-0000-000000000000";
-        String TR2_ID = "a0000002-0000-0000-0000-000000000000";
-
-        // With Player
-        mockMvc.perform(get(BASE_PATH + "/suite/" + TR1_ID + "/trophies?playerId=" + PLAYER_ID))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$[0].rank").value(1))
-                .andExpect(jsonPath("$[0].title").value("Tomb Raider Platinum"))
-                .andExpect(jsonPath("$[0].color").value("platinum"))
-                .andExpect(jsonPath("$[0].groupName").value("Tomb Raider 1"))
-                .andExpect(jsonPath("$[0].earnedAt").isEmpty())
-                .andExpect(jsonPath("$[1].rank").value(2))
-                .andExpect(jsonPath("$[1].title").value("Finished Peru"))
-                .andExpect(jsonPath("$[1].color").value("bronze"))
-                .andExpect(jsonPath("$[1].groupName").value("Tomb Raider 1"))
-                .andExpect(jsonPath("$[1].earnedAt").value("2025-09-01T10:00:00Z"))
-                .andExpect(jsonPath("$[2].rank").value(3))
-                .andExpect(jsonPath("$[2].title").value("Finished Greece"))
-                .andExpect(jsonPath("$[2].color").value("bronze"))
-                .andExpect(jsonPath("$[2].groupName").value("Tomb Raider 1"))
-                .andExpect(jsonPath("$[2].earnedAt").value("2025-09-10T15:00:00Z"))
-                .andExpect(jsonPath("$[3].rank").value(4))
-                .andExpect(jsonPath("$[3].title").value("Finished Egypt"))
-                .andExpect(jsonPath("$[3].color").value("bronze"))
-                .andExpect(jsonPath("$[3].groupName").value("Tomb Raider 1"))
-                .andExpect(jsonPath("$[3].earnedAt").isEmpty())
-                .andExpect(jsonPath("$[4].rank").value(1))
-                .andExpect(jsonPath("$[4].title").value("Finished Unfinished Business"))
-                .andExpect(jsonPath("$[4].color").value("bronze"))
-                .andExpect(jsonPath("$[4].groupName").value("Tomb Raider 1: Unfinished Business"))
-                .andExpect(jsonPath("$[4].earnedAt").isEmpty())
-                .andExpect(jsonPath("$[5]").doesNotExist())
-        ;
-
-        // Without Player
-        mockMvc.perform(get(BASE_PATH + "/suite/" + TR2_ID + "/trophies"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$[0].rank").value(1))
-                .andExpect(jsonPath("$[0].title").value("Tomb Raider II Platinum"))
-                .andExpect(jsonPath("$[0].color").value("platinum"))
-                .andExpect(jsonPath("$[0].groupName").value("Tomb Raider 2"))
-                .andExpect(jsonPath("$[0].earnedAt").isEmpty())
-                .andExpect(jsonPath("$[1].rank").value(2))
-                .andExpect(jsonPath("$[1].title").value("Finished Venice"))
-                .andExpect(jsonPath("$[1].color").value("silver"))
-                .andExpect(jsonPath("$[1].groupName").value("Tomb Raider 2"))
-                .andExpect(jsonPath("$[1].earnedAt").isEmpty())
-                .andExpect(jsonPath("$[2].rank").value(3))
-                .andExpect(jsonPath("$[2].title").value("Finished Maria Doria"))
-                .andExpect(jsonPath("$[2].color").value("silver"))
-                .andExpect(jsonPath("$[2].groupName").value("Tomb Raider 2"))
-                .andExpect(jsonPath("$[2].earnedAt").isEmpty())
-                .andExpect(jsonPath("$[3].rank").value(4))
-                .andExpect(jsonPath("$[3].title").value("Finished Tibet"))
-                .andExpect(jsonPath("$[3].color").value("silver"))
-                .andExpect(jsonPath("$[3].groupName").value("Tomb Raider 2"))
-                .andExpect(jsonPath("$[3].earnedAt").isEmpty())
-                .andExpect(jsonPath("$[4].rank").value(1))
-                .andExpect(jsonPath("$[4].title").value("Finished Golden Mask"))
-                .andExpect(jsonPath("$[4].color").value("silver"))
-                .andExpect(jsonPath("$[4].groupName").value("Tomb Raider 2: Golden Mask"))
-                .andExpect(jsonPath("$[4].earnedAt").isEmpty())
-                .andExpect(jsonPath("$[5]").doesNotExist())
-        ;
-    }
-
 }
-
