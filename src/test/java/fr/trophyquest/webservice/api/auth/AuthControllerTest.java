@@ -6,16 +6,20 @@ import fr.trophyquest.webservice.domain.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.client.ResponseActions;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static fr.trophyquest.webservice.config.SecurityConfig.ADMIN_AUTHORITY;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
@@ -36,6 +40,9 @@ class AuthControllerTest {
             .header("alg", "RS256")
             .subject("cognito-user")
             .build();
+    private static final JwtAuthenticationToken USER = new JwtAuthenticationToken(JWT, List.of());
+    private static final JwtAuthenticationToken ADMIN = new JwtAuthenticationToken(
+            JWT, List.of(new SimpleGrantedAuthority(ADMIN_AUTHORITY)));
 
     private final RestClient.Builder client = RestClient.builder();
     private final MockRestServiceServer cognito = MockRestServiceServer.bindTo(client).build();
@@ -56,13 +63,25 @@ class AuthControllerTest {
         expectUserInfo("Camille");
         expectNicknameUpdate().andRespond(withSuccess());
 
-        AuthUserResponse response = controller.updateDisplayName(JWT,
+        AuthUserResponse response = controller.updateDisplayName(ADMIN,
                 new AuthController.UpdateDisplayNameRequest("  Étoile 星  "));
 
         assertThat(response.id()).isEqualTo(user.getId());
         assertThat(response.displayName()).isEqualTo("Étoile 星");
+        assertThat(response.isAdmin()).isTrue();
         assertThat(user.getDisplayName()).isEqualTo("Étoile 星");
         verify(users).save(user);
+        cognito.verify();
+    }
+
+    @Test
+    void should_return_the_admin_flag_from_the_authenticated_authorities() {
+        when(users.findByCognitoSub("cognito-user")).thenReturn(Optional.of(new User()));
+        expectUserInfo("Camille");
+        expectUserInfo("Camille");
+
+        assertThat(controller.me(USER).isAdmin()).isFalse();
+        assertThat(controller.me(ADMIN).isAdmin()).isTrue();
         cognito.verify();
     }
 
@@ -71,7 +90,7 @@ class AuthControllerTest {
         expectUserInfo("Camille");
         expectNicknameUpdate().andRespond(withBadRequest().header("x-amzn-errortype", "AliasExistsException"));
 
-        assertThatThrownBy(() -> controller.updateDisplayName(JWT,
+        assertThatThrownBy(() -> controller.updateDisplayName(USER,
                 new AuthController.UpdateDisplayNameRequest("Étoile 星")))
                 .isInstanceOfSatisfying(ResponseStatusException.class,
                         error -> assertThat(error.getStatusCode().value()).isEqualTo(409));
@@ -87,7 +106,7 @@ class AuthControllerTest {
         when(users.findByCognitoSub("cognito-user")).thenReturn(Optional.of(user));
         expectUserInfo("Nouveau pseudo");
 
-        assertThat(controller.me(JWT).displayName()).isEqualTo("Nouveau pseudo");
+        assertThat(controller.me(USER).displayName()).isEqualTo("Nouveau pseudo");
         cognito.verify();
     }
 
