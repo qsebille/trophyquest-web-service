@@ -37,6 +37,7 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/association", "/api/association/**").hasAuthority(ADMIN_AUTHORITY)
+                        .requestMatchers(HttpMethod.PUT, "/api/suite/{suiteId}/title").hasAuthority(ADMIN_AUTHORITY)
                         .requestMatchers(HttpMethod.PUT, "/api/auth/me")
                         .hasAuthority("SCOPE_aws.cognito.signin.user.admin")
                         .requestMatchers("/api/auth/**").authenticated()

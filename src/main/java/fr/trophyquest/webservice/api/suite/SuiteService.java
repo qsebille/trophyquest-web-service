@@ -48,6 +48,14 @@ public class SuiteService {
                 suite.getNbGoldTrophies(), suite.getNbPlatinumTrophies());
     }
 
+    @Transactional
+    public SuiteDetailsResponse updateTitle(UUID suiteId, String title) {
+        if (suiteRepository.upsertTitleOverride(suiteId, title) == 0) {
+            throw new SuiteNotFoundException(suiteId);
+        }
+        return fetchDetailsBySuiteId(suiteId);
+    }
+
     public BackgroundImageResponse fetchBackgroundBySuiteId(UUID suiteId) {
         Long gameId = fetchSuite(suiteId).getGameId();
         return gameId == null ? new BackgroundImageResponse(null) : gameBackgroundService.fetchBackgroundByGameId(gameId);
