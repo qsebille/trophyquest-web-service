@@ -21,15 +21,15 @@ public class AuthUserService {
         this.authUserMapper = authUserMapper;
     }
 
-    public AuthUserResponse fetchCurrentUser(CognitoUserInfo cognitoUserInfo) {
+    public AuthUserResponse fetchCurrentUser(CognitoUserInfo cognitoUserInfo, boolean isAdmin) {
         User user = findOrCreate(cognitoUserInfo);
-        return authUserMapper.toDTO(user, cognitoUserInfo.preferredUsername());
+        return authUserMapper.toDTO(user, cognitoUserInfo.preferredUsername(), isAdmin);
     }
 
-    public AuthUserResponse updateDisplayName(CognitoUserInfo cognitoUserInfo, String displayName) {
+    public AuthUserResponse updateDisplayName(CognitoUserInfo cognitoUserInfo, String displayName, boolean isAdmin) {
         User user = findOrCreate(cognitoUserInfo);
         user.setDisplayName(displayName);
-        return authUserMapper.toDTO(userRepository.save(user), displayName);
+        return authUserMapper.toDTO(userRepository.save(user), displayName, isAdmin);
     }
 
     private User findOrCreate(CognitoUserInfo cognitoUserInfo) {

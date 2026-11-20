@@ -4,12 +4,19 @@ import fr.trophyquest.webservice.IntegrationTestBase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -19,10 +26,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AssociationControllerIT extends IntegrationTestBase {
 
     private static final String BASE_PATH = "/api/association";
+    private static final String ADMIN_TOKEN = "test-admin-token";
     private static final String SUITE_ID = "a0000003-0000-0000-0000-000000000000";
 
     @Autowired
     MockMvc mockMvc;
+
+    @MockitoBean
+    JwtDecoder jwtDecoder;
 
     private JdbcTemplate jdbc;
 
@@ -31,11 +42,16 @@ class AssociationControllerIT extends IntegrationTestBase {
         runScript("/sql/clean-db.sql");
         runScript("/sql/insert-stub-dataset.sql");
         jdbc = new JdbcTemplate(dataSource);
+        when(jwtDecoder.decode(ADMIN_TOKEN)).thenReturn(Jwt.withTokenValue(ADMIN_TOKEN)
+                .header("alg", "RS256")
+                .subject("admin")
+                .claim("cognito:groups", List.of("admin"))
+                .build());
     }
 
     @Test
     void should_return_only_uncertain_associations_with_candidates() throws Exception {
-        mockMvc.perform(get(BASE_PATH).param("page", "0"))
+        mockMvc.perform(get(BASE_PATH).param("page", "0").header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total").value(1))
                 .andExpect(jsonPath("$.page").value(0))
@@ -55,7 +71,7 @@ class AssociationControllerIT extends IntegrationTestBase {
 
     @Test
     void should_return_empty_page_beyond_last_association() throws Exception {
-        mockMvc.perform(get(BASE_PATH).param("page", "1"))
+        mockMvc.perform(get(BASE_PATH).param("page", "1").header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total").value(1))
                 .andExpect(jsonPath("$.page").value(1))
@@ -65,6 +81,7 @@ class AssociationControllerIT extends IntegrationTestBase {
     @Test
     void should_validate_selected_candidate_and_reject_others() throws Exception {
         mockMvc.perform(post(BASE_PATH + "/validate").contentType(MediaType.APPLICATION_JSON)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
                         .content("{\"suiteId\":\"" + SUITE_ID + "\",\"gameId\":1003}"))
                 .andExpect(status().isOk())
                 .andExpect(content().string("true"));
@@ -82,6 +99,7 @@ class AssociationControllerIT extends IntegrationTestBase {
     @Test
     void should_reject_all_candidates_and_clear_matching() throws Exception {
         mockMvc.perform(post(BASE_PATH + "/reject").contentType(MediaType.APPLICATION_JSON)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
                         .content("{\"suiteId\":\"" + SUITE_ID + "\"}"))
                 .andExpect(status().isOk())
                 .andExpect(content().string("true"));
@@ -96,12 +114,14 @@ class AssociationControllerIT extends IntegrationTestBase {
 
     @Test
     void should_require_page() throws Exception {
-        mockMvc.perform(get(BASE_PATH)).andExpect(status().isBadRequest());
+        mockMvc.perform(get(BASE_PATH).header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
     void should_reject_invalid_suite_id_without_changing_database() throws Exception {
         mockMvc.perform(post(BASE_PATH + "/validate").contentType(MediaType.APPLICATION_JSON)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
                         .content("{\"suiteId\":\"invalid\",\"gameId\":1003}"))
                 .andExpect(status().isBadRequest());
         assertThat(matchingStatus()).isEqualTo("UNCERTAIN");
@@ -119,7 +139,7 @@ class AssociationControllerIT extends IntegrationTestBase {
     }
 
     private void assertNoRemainingAssociation() throws Exception {
-        mockMvc.perform(get(BASE_PATH).param("page", "0"))
+        mockMvc.perform(get(BASE_PATH).param("page", "0").header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total").value(0))
                 .andExpect(jsonPath("$.content").isEmpty());
