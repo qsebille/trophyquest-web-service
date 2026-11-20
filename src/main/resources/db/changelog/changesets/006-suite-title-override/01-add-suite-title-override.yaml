@@ -1,0 +1,23 @@
+databaseChangeLog:
+  - changeSet:
+      id: 006-suite-title-override/01-add-suite-title-override
+      author: Quentin Sebille
+      changes:
+        - createTable:
+            schemaName: app
+            tableName: suite_title_override
+            columns:
+              - column:
+                  name: suite_id
+                  type: uuid
+                  constraints: { nullable: false, primaryKey: true, primaryKeyName: pk_suite_title_override }
+              - column: { name: title, type: text, constraints: { nullable: false } }
+        - addForeignKeyConstraint:
+            constraintName: fk_suite_title_override_suite
+            baseTableSchemaName: app
+            baseTableName: suite_title_override
+            baseColumnNames: suite_id
+            referencedTableSchemaName: psn
+            referencedTableName: suite
+            referencedColumnNames: id
+            onDelete: CASCADE

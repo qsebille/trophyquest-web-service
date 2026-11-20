@@ -4,13 +4,23 @@ import fr.trophyquest.webservice.IntegrationTestBase;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -24,6 +34,9 @@ class SuiteControllerIT extends IntegrationTestBase {
 
     @Autowired
     MockMvc mockMvc;
+
+    @MockitoBean
+    JwtDecoder jwtDecoder;
 
     @BeforeEach
     void beforeEach() {
@@ -42,6 +55,91 @@ class SuiteControllerIT extends IntegrationTestBase {
                 .andExpect(jsonPath("$.imageUrl").value("tr1.png"))
                 .andExpect(jsonPath("$.nbBronzeTrophies").value(4))
                 .andExpect(jsonPath("$.nbPlatinumTrophies").value(1));
+    }
+
+    @Test
+    void should_require_the_admin_role_to_update_a_suite_title() throws Exception {
+        stubToken("regular-user", List.of("moderator"));
+
+        mockMvc.perform(put(SUITE_PATH + "/title", SUITE_ID)
+                        .contentType(MediaType.APPLICATION_JSON).content("""
+                                {"title":"Corrected title"}
+                                """))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(put(SUITE_PATH + "/title", SUITE_ID)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer regular-user")
+                        .contentType(MediaType.APPLICATION_JSON).content("""
+                                {"title":"Corrected title"}
+                                """))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get(SUITE_PATH, SUITE_ID))
+                .andExpect(jsonPath("$.title").value("Tomb Raider 1"));
+    }
+
+    @Test
+    void should_keep_the_admin_title_when_psn_data_changes() throws Exception {
+        stubToken("admin-user", List.of("admin"));
+
+        mockMvc.perform(put(SUITE_PATH + "/title", SUITE_ID)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer admin-user")
+                        .contentType(MediaType.APPLICATION_JSON).content("""
+                                {"title":"  Corrected title  "}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("Corrected title"));
+
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        assertThat(jdbc.queryForObject("SELECT name FROM psn.suite WHERE id = ?::uuid", String.class, SUITE_ID))
+                .isEqualTo("Tomb Raider 1");
+        assertThat(jdbc.update("""
+                INSERT INTO psn.suite (id, name, psn_image_url, platforms)
+                VALUES (?::uuid, 'New PSN title', 'new-psn-image.png', ARRAY['PS5'])
+                ON CONFLICT (id) DO NOTHING
+                """, SUITE_ID)).isZero();
+        jdbc.update("UPDATE psn.suite SET name = 'Refreshed PSN title' WHERE id = ?::uuid", SUITE_ID);
+
+        mockMvc.perform(get(SUITE_PATH, SUITE_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("Corrected title"))
+                .andExpect(jsonPath("$.gameId").value(1001))
+                .andExpect(jsonPath("$.nbBronzeTrophies").value(4));
+        mockMvc.perform(get(SUITE_PATH, OTHER_SUITE_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("Tomb Raider 2"));
+
+        mockMvc.perform(put(SUITE_PATH + "/title", SUITE_ID)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer admin-user")
+                        .contentType(MediaType.APPLICATION_JSON).content("""
+                                {"title":"Second correction"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("Second correction"));
+    }
+
+    @Test
+    void should_reject_empty_titles_and_unknown_suites() throws Exception {
+        stubToken("admin-user", List.of("admin"));
+
+        for (String body : List.of("{}", "{\"title\":\"  \"}")) {
+            mockMvc.perform(put(SUITE_PATH + "/title", SUITE_ID)
+                            .header(HttpHeaders.AUTHORIZATION, "Bearer admin-user")
+                            .contentType(MediaType.APPLICATION_JSON).content(body))
+                    .andExpect(status().isBadRequest());
+        }
+        mockMvc.perform(put(SUITE_PATH + "/title", UNKNOWN_SUITE_ID)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer admin-user")
+                        .contentType(MediaType.APPLICATION_JSON).content("""
+                                {"title":"Corrected title"}
+                                """))
+                .andExpect(status().isNotFound());
+    }
+
+    private void stubToken(String token, List<String> groups) {
+        when(jwtDecoder.decode(token)).thenReturn(Jwt.withTokenValue(token)
+                .header("alg", "RS256")
+                .subject(token)
+                .claim("cognito:groups", groups)
+                .build());
     }
 
     @Test
