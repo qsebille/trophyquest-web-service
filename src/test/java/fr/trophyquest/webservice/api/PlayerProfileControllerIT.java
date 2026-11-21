@@ -9,6 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import java.time.OffsetDateTime;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -40,6 +43,32 @@ class PlayerProfileControllerIT extends IntegrationTestBase {
                 .andExpect(jsonPath("$.nbEarnedSilverTrophies").value(1))
                 .andExpect(jsonPath("$.nbEarnedGoldTrophies").value(1))
                 .andExpect(jsonPath("$.nbEarnedPlatinumTrophies").value(1));
+    }
+
+    @Test
+    void should_serve_the_cached_avatar_until_the_psn_avatar_changes() throws Exception {
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        String refreshedAt = "SELECT updated_at FROM psn.player WHERE id = ?::uuid";
+        OffsetDateTime previousRefresh = OffsetDateTime.parse("2025-01-01T00:00:00Z");
+        jdbc.update("UPDATE psn.player SET updated_at = ? WHERE id = ?::uuid", previousRefresh, PLAYER_ID);
+        jdbc.update("UPDATE psn.player SET aws_avatar_url = 'cached.png' WHERE id = ?::uuid", PLAYER_ID);
+
+        assertThat(jdbc.queryForObject(refreshedAt, OffsetDateTime.class, PLAYER_ID)).isEqualTo(previousRefresh);
+        mockMvc.perform(get(BASE_PATH + PLAYER_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.avatarUrl").value("cached.png"));
+
+        jdbc.update("UPDATE psn.player SET psn_avatar_url = 'lofrings.png' WHERE id = ?::uuid", PLAYER_ID);
+
+        assertThat(jdbc.queryForObject(refreshedAt, OffsetDateTime.class, PLAYER_ID)).isAfter(previousRefresh);
+        assertThat(jdbc.queryForObject("SELECT aws_avatar_url FROM psn.player WHERE id = ?::uuid",
+                String.class, PLAYER_ID)).isEqualTo("cached.png");
+
+        jdbc.update("UPDATE psn.player SET psn_avatar_url = 'new.png' WHERE id = ?::uuid", PLAYER_ID);
+
+        mockMvc.perform(get(BASE_PATH + PLAYER_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.avatarUrl").value("new.png"));
     }
 
     @Test

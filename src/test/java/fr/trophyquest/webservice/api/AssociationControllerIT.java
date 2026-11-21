@@ -66,7 +66,20 @@ class AssociationControllerIT extends IntegrationTestBase {
                 .andExpect(jsonPath("$.content[0].games.length()").value(2))
                 .andExpect(jsonPath("$.content[0].games[*].gameId", containsInAnyOrder(1003, 1004)))
                 .andExpect(jsonPath("$.content[0].games[?(@.gameId == 1003)].title").value("Tomb Raider"))
+                .andExpect(jsonPath("$.content[0].games[?(@.gameId == 1003)].coverUrl")
+                        .value(containsInAnyOrder("https://igdb.example.com/covers/tomb-raider.png")))
                 .andExpect(jsonPath("$.content[0].games[?(@.gameId == 1003)].score").value(0.88));
+    }
+
+    @Test
+    void should_use_the_cached_cover_of_a_candidate_already_matched_to_another_suite() throws Exception {
+        jdbc.update("UPDATE app.igdb_matching SET matched_game_id = 1003 WHERE matched_game_id = 1001");
+        jdbc.update("UPDATE igdb.game SET aws_cover_url = 'https://images.example.com/tomb-raider.png' WHERE id = 1003");
+
+        mockMvc.perform(get(BASE_PATH).param("page", "0").header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].games[?(@.gameId == 1003)].coverUrl")
+                        .value(containsInAnyOrder("https://images.example.com/tomb-raider.png")));
     }
 
     @Test
