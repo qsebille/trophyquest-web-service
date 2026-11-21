@@ -1,0 +1,35 @@
+databaseChangeLog:
+  - changeSet:
+      id: 007-image-cache/01-update-player-avatar-trigger
+      author: Quentin Sebille
+      changes:
+        - sql:
+            dbms: postgresql
+            splitStatements: false
+            sql: |
+              CREATE FUNCTION psn.update_player_profile()
+              RETURNS trigger AS $$
+              BEGIN
+                IF NEW.psn_avatar_url IS DISTINCT FROM OLD.psn_avatar_url THEN
+                  NEW.aws_avatar_url = NULL;
+                END IF;
+                NEW.updated_at = CURRENT_TIMESTAMP;
+                RETURN NEW;
+              END;
+              $$ LANGUAGE plpgsql;
+
+              DROP TRIGGER trg_psn_player_set_updated_at ON psn.player;
+              CREATE TRIGGER trg_psn_player_update_profile
+                BEFORE UPDATE OF id, pseudo, psn_avatar_url, created_at ON psn.player
+                FOR EACH ROW
+                EXECUTE FUNCTION psn.update_player_profile();
+      rollback:
+        - sql:
+            dbms: postgresql
+            sql: |
+              DROP TRIGGER trg_psn_player_update_profile ON psn.player;
+              DROP FUNCTION psn.update_player_profile();
+              CREATE TRIGGER trg_psn_player_set_updated_at
+                BEFORE UPDATE ON psn.player
+                FOR EACH ROW
+                EXECUTE FUNCTION psn.set_updated_at();
