@@ -6,6 +6,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.Immutable;
 
 import java.util.Date;
@@ -25,7 +26,7 @@ public class IgdbGame {
     @Column(name = "name")
     private String name;
 
-    @Column(name = "igdb_cover_url")
+    @Formula("COALESCE(aws_cover_url, igdb_cover_url)")
     private String coverUrl;
 
     @Column(name = "summary")
