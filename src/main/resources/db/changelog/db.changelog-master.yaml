@@ -37,3 +37,6 @@ databaseChangeLog:
   - include: { file: changesets/006-suite-title-override/02-replace-suite-view.yaml, relativeToChangelogFile: true }
 
   - include: { file: changesets/007-image-cache/01-update-player-avatar-trigger.yaml, relativeToChangelogFile: true }
+
+  - include: { file: changesets/008-statistics/01-image-statistics.sql, relativeToChangelogFile: true }
+  - include: { file: changesets/008-statistics/02-create-catalog-statistics-view.sql, relativeToChangelogFile: true }
