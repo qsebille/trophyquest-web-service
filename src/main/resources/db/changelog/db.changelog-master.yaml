@@ -40,3 +40,5 @@ databaseChangeLog:
 
   - include: { file: changesets/008-statistics/01-image-statistics.sql, relativeToChangelogFile: true }
   - include: { file: changesets/008-statistics/02-create-catalog-statistics-view.sql, relativeToChangelogFile: true }
+
+  - include: { file: changesets/009-psn-reconciliation/01-add-player-sync-state.sql, relativeToChangelogFile: true }
